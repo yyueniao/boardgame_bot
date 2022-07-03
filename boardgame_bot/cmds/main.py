@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import json
 from core.classes import Cog_Extension
-import re
 
 
 with open("setting.json",'r',encoding='utf8') as jfile:
@@ -32,7 +31,6 @@ class Main(Cog_Extension):
 
     @commands.command()
     async def open(self, ctx, game=None):
-        print("check if format is correct:")
         if game == None:
             await ctx.send("请输入游戏名称。\n例：’-open 刺杀国王‘")
             return 0
@@ -40,18 +38,14 @@ class Main(Cog_Extension):
             await ctx.send(f"对不起啦，{game} 还没开发完成，输入'-gamelist'看看这里有什么游戏~")
             return 0
 
-        print("check if there is another room already")
         if Main.state != "free":
             await ctx.send("暂时只能开启一个房间~请先回复'-close'关闭先前的房间，然后再次使用本指令")
             return 0
 
-        print("opening the room")
         Main.game = game
-        print(f"set {Main.game} success")
         details = jdata["details"]
         detail = details[game]
         self.bot.load_extension(f"games.{detail['filename']}")
-        print(f"loaded game file success")
         embed = discord.Embed(title=f">>{game}<<", description=f"{detail['introduction']}")
         embed.add_field(name="游戏人数", value=f"{detail['min']}~{detail['max']}", inline=False)
         embed.add_field(name="游戏时长", value=detail['time'], inline=False)
@@ -62,19 +56,20 @@ class Main(Cog_Extension):
         Main.room_info = embed
         Main.room_msg = msg
         Main.state = "open"
-        print("open room success")
 
     @commands.command()
-    async def join(self, ctx):
+    async def join(self, ctx, user_mention=None):
         if Main.state != "open":
             await ctx.send("没有已开启的游戏，请先开启游戏房间。输入 '-open [游戏名称]' 立即开启游戏房间\n例：’-open 刺杀国王‘")
             return 0
-        print("check if he/she has not joined")
- #       if ctx.message.author in Main.players:
-  #          await ctx.message.delete()
-   #         return 0
-        print("joining")
-        Main.players.append(ctx.message.author)
+        if not user_mention:
+            user = ctx.message.author
+        else:
+            user_id = user_mention[3:-1]
+            user = await self.bot.fetch_user(int(user_id))
+        if user in Main.players:
+            return 0
+        Main.players.append(user)
         players_name = ""
         embed = Main.room_info
         msg = Main.room_msg
