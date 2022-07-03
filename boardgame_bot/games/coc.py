@@ -1,10 +1,8 @@
-import discord
 from discord.ext import commands
 import json
 import re
 import random
 
-from cmds.main import Main
 from core.classes import Cog_Extension
 
 with open("setting.json", 'r', encoding='utf8') as jfile:
